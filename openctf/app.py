@@ -5,11 +5,11 @@ import time
 from flask import Flask, render_template, request
 from flask_login import current_user
 
-import views
-from config import Config as AppConfig
-from judge_api import judge_api
-from logger import CTFLogHandler
-from models import Config, breadcrumbs, cache, db, login_manager
+import openctf.views
+from openctf.config import Config as AppConfig
+from openctf.judge_api import judge_api
+from openctf.logger import CTFLogHandler
+from openctf.models import Config, breadcrumbs, cache, db, login_manager
 
 app = Flask(__name__)
 app.config.from_object(
@@ -25,20 +25,20 @@ login_manager.init_app(app)
 cache.init_app(app)
 judge_api.init_app(app)
 app.db = db
-views.importer.create_folders()
+openctf.views.importer.create_folders()
 
 handler = CTFLogHandler("logs/app.log")
 handler.setLevel(logging.DEBUG)
 app.logger.addHandler(handler)
 
-app.register_blueprint(views.admin.blueprint, url_prefix="/admin")
-app.register_blueprint(views.base.blueprint)
-app.register_blueprint(views.classroom.blueprint, url_prefix="/classroom")
-app.register_blueprint(views.importer.blueprint)
-app.register_blueprint(views.oauth.blueprint, url_prefix="/oauth")
-app.register_blueprint(views.problems.blueprint, url_prefix="/problems")
-app.register_blueprint(views.teams.blueprint, url_prefix="/teams")
-app.register_blueprint(views.users.blueprint, url_prefix="/users")
+app.register_blueprint(openctf.views.admin.blueprint, url_prefix="/admin")
+app.register_blueprint(openctf.views.base.blueprint)
+app.register_blueprint(openctf.views.classroom.blueprint, url_prefix="/classroom")
+app.register_blueprint(openctf.views.importer.blueprint)
+app.register_blueprint(openctf.views.oauth.blueprint, url_prefix="/oauth")
+app.register_blueprint(openctf.views.problems.blueprint, url_prefix="/problems")
+app.register_blueprint(openctf.views.teams.blueprint, url_prefix="/teams")
+app.register_blueprint(openctf.views.users.blueprint, url_prefix="/users")
 
 
 @app.context_processor
