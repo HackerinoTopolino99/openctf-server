@@ -28,9 +28,9 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.expression import union_all
 from sqlalchemy.orm import backref
 
-from .config import Config as AppConfig
-from .constants import INVITATION_TO_TEAM, INVITATION_TO_USER, USER_REGULAR
-from .util import generate_identicon, generate_string
+from openctf.config import Config as AppConfig
+from openctf.constants import INVITATION_TO_TEAM, INVITATION_TO_USER, USER_REGULAR
+from openctf.util import generate_identicon, generate_string
 
 # pylint: disable=invalid-name
 db = SQLAlchemy()
