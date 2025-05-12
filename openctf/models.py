@@ -10,32 +10,29 @@ import importlib
 import os
 import re
 import time
-from cStringIO import StringIO
+from io import StringIO
 from datetime import datetime
 from string import Template
 
 import onetimepass
-import paramiko
 import requests
 from Crypto.PublicKey import RSA
 from flask import current_app as app
-from flask_breadcrumbs import Breadcrumbs
-from flask_cache import Cache
+from flask_caching import Cache
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
 from markdown2 import markdown
 from passlib.hash import bcrypt
-from sqlalchemy import and_, select, func
+from sqlalchemy import and_, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.expression import union_all
 from sqlalchemy.orm import backref
 
-import constants
-import util
-from config import Config as AppConfig
+from .config import Config as AppConfig
+from .constants import INVITATION_TO_TEAM, INVITATION_TO_USER, USER_REGULAR
+from .util import generate_identicon, generate_string
 
 # pylint: disable=invalid-name
-breadcrumbs = Breadcrumbs()
 db = SQLAlchemy()
 login_manager = LoginManager()
 cache = Cache()
@@ -345,7 +342,7 @@ class User(db.Model):
         """
         if not self._avatar:
             avatar_file = StringIO()
-            avatar = util.generate_identicon(self.email)
+            avatar = generate_identicon(self.email)
             avatar.save(avatar_file, format="PNG")
             avatar_file.seek(0)
             response = requests.post("http://filestore:8000/save",
@@ -360,20 +357,20 @@ class User(db.Model):
     def pending_invitations(self, fr=None):
         if fr is not None:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_USER, _fr=fr,
+                type=INVITATION_TO_USER, _fr=fr,
                 _to=self.uid).first()
         else:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_USER, _to=self.uid).all()
+                type=INVITATION_TO_USER, _to=self.uid).all()
 
     def pending_requests(self, to=None):
         if to is not None:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_TEAM, _fr=self.uid,
+                type=INVITATION_TO_TEAM, _fr=self.uid,
                 _to=to).first()
         else:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_TEAM, _fr=self.uid).all()
+                type=INVITATION_TO_TEAM, _fr=self.uid).all()
 
     @hybrid_property
     def username_lower(self):
@@ -541,7 +538,7 @@ class PasswordResetToken(db.Model):
     uid = db.Column(db.Integer, db.ForeignKey("users.uid"), index=True)
     active = db.Column(db.Boolean)
     token = db.Column(db.String(length=16),
-                      default=lambda: util.generate_string(length=16))
+                      default=lambda: generate_string(length=16))
     email = db.Column(db.Unicode(length=128))
     expire = db.Column(db.DateTime)
 
@@ -643,7 +640,7 @@ class Team(db.Model):
     def observer(self):
         return self.size == 0 or \
             User.query.filter(and_(User.tid == self.tid,
-                                   User.level != constants.USER_REGULAR)) \
+                                   User.level != USER_REGULAR)) \
                    .count()
 
     @hybrid_property
@@ -699,20 +696,20 @@ class Team(db.Model):
     def pending_invitations(self, to=None):
         if to is not None:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_USER, _fr=self.tid,
+                type=INVITATION_TO_USER, _fr=self.tid,
                 _to=to).first()
         else:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_USER, _fr=self.tid).all()
+                type=INVITATION_TO_USER, _fr=self.tid).all()
 
     def pending_requests(self, fr=None):
         if fr is not None:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_TEAM, _fr=fr,
+                type=INVITATION_TO_TEAM, _fr=fr,
                 _to=self.tid).first()
         else:
             return TeamInvitation.query.filter_by(
-                type=constants.INVITATION_TO_TEAM, _to=self.tid).all()
+                type=INVITATION_TO_TEAM, _to=self.tid).all()
 
     def has_unlocked(self, problem):
         solves = Solve.query.filter_by(tid=self.tid, correct=True).all()
@@ -832,17 +829,17 @@ class TeamInvitation(db.Model):
 
     @property
     def fr(self):
-        if self.type == constants.INVITATION_TO_USER:
+        if self.type == INVITATION_TO_USER:
             return Team.query.filter_by(tid=self._fr).first()
-        elif self.type == constants.INVITATION_TO_TEAM:
+        elif self.type == INVITATION_TO_TEAM:
             return User.query.filter_by(uid=self._fr).first()
         return None
 
     @property
     def to(self):
-        if self.type == constants.INVITATION_TO_USER:
+        if self.type == INVITATION_TO_USER:
             return User.query.filter_by(uid=self._to).first()
-        elif self.type == constants.INVITATION_TO_TEAM:
+        elif self.type == INVITATION_TO_TEAM:
             return Team.query.filter_by(tid=self._to).first()
         return None
 
