@@ -6,7 +6,7 @@
 """
 
 import base64
-import imp
+import importlib
 import os
 import re
 import time
@@ -443,7 +443,7 @@ class Problem(db.Model):
                                      correct=True).count()
 
     def get_grader(self):
-        grader = imp.new_module("grader")
+        grader = importlib.new_module("grader")
         exec (self.grader, grader.__dict__)
         return grader
 

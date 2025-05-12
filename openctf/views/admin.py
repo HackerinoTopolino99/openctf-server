@@ -20,7 +20,7 @@ from wtforms.fields import *
 from wtforms.validators import *
 from wtforms_components import read_only
 
-from judge_api import judge_api
+from .judge_api import judge_api
 import util
 from decorators import admin_required
 from constants import USER_LEVELS

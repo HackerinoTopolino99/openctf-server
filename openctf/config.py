@@ -6,11 +6,11 @@
     in the environment file.
 """
 
-import cPickle as pickle
+import pickle
 import os
 
 import pathlib
-from werkzeug.contrib.cache import RedisCache
+from cachelib import RedisCache
 
 SERVICES = ['github', 'google']
 
