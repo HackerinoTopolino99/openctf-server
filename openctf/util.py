@@ -8,22 +8,18 @@
     platform.)
 """
 
-import cPickle as pickle
 import datetime
 import hashlib
 import json
 import random
 import re
-import threading
 import time
-from functools import wraps
 from string import hexdigits
 
 import enum
 import requests
 from flask import current_app as app
 from PIL import Image, ImageDraw
-from redis import Redis
 
 
 VALID_USERNAME = re.compile(r"^[A-Za-z_][A-Za-z\d_]*$")
